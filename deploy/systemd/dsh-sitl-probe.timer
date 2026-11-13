@@ -1,0 +1,11 @@
+[Unit]
+Description=DSH Suite - SITL/中继 30s 心跳探针定时器
+
+[Timer]
+OnBootSec=150s
+OnUnitActiveSec=30s
+AccuracySec=1s
+Unit=dsh-sitl-probe.service
+
+[Install]
+WantedBy=timers.target

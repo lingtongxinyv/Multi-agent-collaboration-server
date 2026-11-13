@@ -1,0 +1,25 @@
+[Unit]
+Description=DSH Suite - DeepSeek Harness (管理员机娘, :3080)
+After=network.target dsh-hub.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/agent/.local/nodejs/bin
+Environment=DSH_HOME=/home/agent/.dsh-admin
+Environment=NODE_OPTIONS=--experimental-strip-types
+WorkingDirectory=/home/agent/deepseek-harness
+ExecStart=/home/agent/.local/nodejs/bin/pnpm dsh web \
+    --host 127.0.0.1 \
+    --port 3080 \
+    --no-open \
+    --public-url https://agent.example.com/dsh/ \
+    --trusted-host agent.example.com
+Restart=always
+RestartSec=3
+KillSignal=SIGTERM
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

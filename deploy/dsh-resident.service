@@ -1,0 +1,18 @@
+[Unit]
+Description=DSH Suite - 助手值守分身（Hub Agent 通道，近实时双向）
+After=network.target dsh-hub.service
+Wants=dsh-hub.service
+
+[Service]
+Type=simple
+# 可选：把 .env 里的变量注入（文件不存在也不报错）
+EnvironmentFile=-/home/agent/dsh-suite/.env
+User=agent
+Environment=DSH_XIAOLING_CONFIG=/home/agent/dsh-suite/workers/resident.config.json
+ExecStart=/usr/bin/python3 /home/agent/dsh-suite/workers/resident_agent.py
+Restart=always
+RestartSec=5
+WorkingDirectory=%h
+
+[Install]
+WantedBy=multi-user.target

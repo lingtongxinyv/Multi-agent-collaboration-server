@@ -1,0 +1,28 @@
+{
+  "db_path": "data/kb.sqlite3",
+  "embedding": {
+    "provider": "ollama",
+    "model": "nomic-embed-text",
+    "base_url": "http://127.0.0.1:11434",
+    "enabled": true,
+    "batch": 8
+  },
+  "answer": {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "base_url": "https://api.deepseek.com",
+    "api_key_env": "DEEPSEEK_API_KEY",
+    "max_context_chunks": 8
+  },
+  "sources": {
+    "memory_library": {"enabled": false, "root": "", "include_sessions": false},
+    "repos": {"enabled": false, "roots": [], "extensions": [], "max_file_kb": 512},
+    "notes": {"enabled": false, "roots": []},
+    "inbox": {"enabled": false, "root": "data/inbox"}
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8787,
+    "token": ""
+  }
+}

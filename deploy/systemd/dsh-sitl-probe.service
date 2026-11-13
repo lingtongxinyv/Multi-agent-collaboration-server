@@ -1,0 +1,10 @@
+[Unit]
+Description=DSH Suite - SITL/中继 30s 心跳探针
+Documentation=file:///home/agent/dsh-suite/docs/mavlink.md
+After=dsh-sitl.service dsh-mavlink-relay.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /home/agent/dsh-suite/ops/sitl-probe.sh
+Nice=10
+IOSchedulingClass=idle

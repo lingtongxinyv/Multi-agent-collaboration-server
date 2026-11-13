@@ -1,0 +1,35 @@
+# NapCat（OneBot v11 协议端）—— 给助手的小号用
+#
+# 用 host 网络：容器里的 NapCat 才能把事件 POST 到宿主 127.0.0.1:8770（桥），
+# 桥也不用对外监听。Linux only。
+#
+# 首次启动：docker compose up -d && docker logs -f napcat
+# 看到二维码用手机 QQ（小号）扫；或用 WebUI http://127.0.0.1:6099（token 见日志）。
+services:
+  napcat:
+    image: mlikiowa/napcat-docker:latest
+    container_name: napcat
+    restart: unless-stopped
+    # 不用 host 网络：宿主上已有 X0/X1，容器在 host netns 里会和它们抢 /tmp/.X11-unix/X1，
+    # Xvfb 直接起不来（实测）。桥接网络各用各的 netns，Xvfb 正常。
+    ports:
+      - "127.0.0.1:3000:3000"   # OneBot HTTP（只给本机桥用）
+      - "127.0.0.1:6099:6099"   # WebUI（本机访问；要看码用助手转图）
+    extra_hosts:
+      # host-gateway 会指到 docker0(172.17.0.1)，但本 compose 网桥是 172.19.0.1
+      # 且 docker0 是 DOWN ⇒ 必须显式指到真实网关，否则容器连不到桥。
+      - "host.docker.internal:172.19.0.1"
+    entrypoint: ["/app/napcat-entrypoint.sh"]
+    environment:
+      - NAPCAT_UID=1000
+      - NAPCAT_GID=1000
+      # 账号来自同目录 .env（见 .env.example），别把真号写进这里
+      - ACCOUNT=${QQ_ACCOUNT:-}
+      # 可选：密码 MD5 回退。优先扫码登录让 NapCat 自己落 token；
+      # 填了 MD5 等于把密码以弱哈希形式留在磁盘上，能不用就不用。
+      - NAPCAT_QUICK_ACCOUNT=${QQ_ACCOUNT:-}
+      - NAPCAT_QUICK_PASSWORD_MD5=${QQ_PASSWORD_MD5:-}
+    volumes:
+      - ./napcat/config:/app/napcat/config
+      - ./napcat/qq:/app/.config/QQ
+      - ./napcat-entrypoint.sh:/app/napcat-entrypoint.sh:ro

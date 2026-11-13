@@ -1,0 +1,17 @@
+[Unit]
+Description=DSH Suite - MCP 协作 Hub (:8765)
+After=network.target dsh-panel.service
+
+[Service]
+Type=simple
+# 可选：把 .env 里的变量注入（文件不存在也不报错）
+EnvironmentFile=-/home/agent/dsh-suite/.env
+User=agent
+Group=agent
+WorkingDirectory=/home/agent/dsh-suite/mcp-hub
+ExecStart=/home/agent/.local/bin/uv run --project /home/agent/dsh-suite python hub.py 127.0.0.1 8765
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,16 @@
+[Unit]
+Description=PX4 SITL 容器（px4-t4，MAVLink TCP 5760）
+Documentation=file:///home/agent/dsh-suite/docs/mavlink.md
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/docker start px4-t4
+ExecStop=/usr/bin/docker stop --time 20 px4-t4
+TimeoutStartSec=180
+TimeoutStopSec=90
+
+[Install]
+WantedBy=multi-user.target

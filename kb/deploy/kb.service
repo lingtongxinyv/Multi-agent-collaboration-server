@@ -1,0 +1,17 @@
+[Unit]
+Description=Personal AI Knowledge Base (web + MCP)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/kb
+EnvironmentFile=/opt/kb/kb.env
+ExecStart=/opt/kb/.venv/bin/python -m app.cli serve
+Restart=always
+RestartSec=5
+User=kb
+Group=kb
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+[Unit]
+Description=DSH QQ Bridge - QQ(NapCat/OneBot) <-> 站娘对话接口
+After=network.target dsh-panel.service
+Wants=dsh-panel.service
+
+[Service]
+Type=simple
+User=agent
+Group=agent
+WorkingDirectory=/home/agent/dsh-suite/qq-bridge
+EnvironmentFile=/home/agent/dsh-suite/data/qq-bridge/env
+ExecStart=/home/agent/dsh-suite/.venv/bin/python /home/agent/dsh-suite/qq-bridge/bridge.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

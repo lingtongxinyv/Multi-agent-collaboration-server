@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>忆兮</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1b1f24; --muted:#6b7280;
+    --line:#e5e7eb; --accent:#2563eb; --accent-soft:#eef4ff; --warn:#b45309;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.65;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:32px 20px 80px}
+  header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  h1{font-size:22px;margin:0;letter-spacing:.5px}
+  .stat{font-size:12px;color:var(--muted);background:var(--card);
+        border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 22px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;
+         padding:14px;display:flex;gap:10px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  textarea{
+    flex:1;border:0;outline:0;resize:none;font:inherit;font-size:15px;
+    min-height:52px;background:transparent;color:var(--ink)
+  }
+  button{
+    border:0;border-radius:10px;background:var(--accent);color:#fff;font-size:14px;
+    padding:10px 18px;cursor:pointer;font-weight:600;transition:.15s
+  }
+  button:hover{filter:brightness(1.08)}
+  button:disabled{opacity:.55;cursor:default}
+  .tabs{display:flex;gap:8px;margin:14px 0 20px}
+  .tab{font-size:13px;padding:5px 12px;border-radius:999px;background:var(--card);
+       border:1px solid var(--line);color:var(--muted);cursor:pointer}
+  .tab.on{background:var(--accent-soft);border-color:#c7dbff;color:var(--accent);font-weight:600}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+        padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .card h2{font-size:13px;color:var(--muted);margin:0 0 10px;font-weight:600;letter-spacing:.4px}
+  .answer{font-size:15px;white-space:normal}
+  .answer p{margin:0 0 10px}
+  .answer ul,.answer ol{margin:6px 0 10px;padding-left:22px}
+  .answer code{background:#f3f4f6;border-radius:4px;padding:1px 5px;font-size:13px}
+  .answer pre{background:#f3f4f6;border-radius:8px;padding:12px;overflow:auto;font-size:13px}
+  .cite{font-size:11px;color:var(--accent);vertical-align:super;font-weight:700;margin-left:1px}
+  .src{border-top:1px dashed var(--line);padding:14px 0 4px}
+  .src:first-of-type{border-top:0}
+  .src .head{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+  .idx{width:22px;height:22px;flex:0 0 22px;border-radius:6px;background:var(--accent-soft);
+       color:var(--accent);font-size:11px;font-weight:700;display:grid;place-items:center}
+  .path{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#374151;
+        word-break:break-all}
+  .tags{display:flex;gap:6px;margin-left:auto}
+  .tag{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+  .frag{font-size:13px;color:#3f4652;white-space:pre-wrap;max-height:170px;overflow:hidden;
+        margin-top:8px;mask-image:linear-gradient(#000 62%,transparent)}
+  .frag.open{max-height:none;mask-image:none}
+  .more{font-size:12px;color:var(--accent);cursor:pointer;user-select:none}
+  .empty{color:var(--muted);font-size:14px;padding:24px 0;text-align:center}
+  .warn{color:var(--warn);font-size:13px}
+  .foot{color:#9aa1ab;font-size:12px;text-align:center;margin-top:34px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>忆兮</h1>
+    <span class="stat" id="stat">加载中…</span>
+  </header>
+  <p class="sub">把项目记忆、经验、笔记与文档收进一个可检索的大脑。</p>
+
+  <div class="panel">
+    <textarea id="q" placeholder="问点什么…例如：PX4 的 QGC 3D 视图为什么崩溃？"></textarea>
+    <button id="go">提问</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-mode="ask">AI 回答</div>
+    <div class="tab" data-mode="search">只看原文</div>
+  </div>
+
+  <div id="out"></div>
+  <p class="foot">本地运行 · 数据不出机</p>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let mode = "ask";
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("on"));
+  t.classList.add("on"); mode = t.dataset.mode;
+});
+
+$("#go").onclick = run;
+$("#q").addEventListener("keydown", e => {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) run();
+});
+
+const KB_TOKEN_KEY = "kb_token";
+const kbToken = () => localStorage.getItem(KB_TOKEN_KEY) || "";
+const authHeaders = () => (kbToken() ? {"X-KB-Token": kbToken()} : {});
+function askToken(){
+  const t = window.prompt("这台知识库需要访问口令，请粘贴口令（服务器 /opt/kb/kb_config.json 里的 server.token）");
+  if (t && t.trim()){ localStorage.setItem(KB_TOKEN_KEY, t.trim()); return true; }
+  return false;
+}
+
+async function callApi(endpoint, init){
+  const withAuth = () => ({...init, headers: {...(init?.headers||{}), ...authHeaders()}});
+  let r = await fetch(endpoint, withAuth());
+  if (r.status === 401 && askToken()) r = await fetch(endpoint, withAuth());
+  return r;
+}
+
+async function stats(){
+  try{
+    const r = await callApi("api/stats"); const d = await r.json();
+    const docs = d.documents_total ?? 0;
+    const emb = d.embedding?.available ? "向量开启" : "向量降级";
+    $("#stat").textContent = `${docs} 篇文档 · ${d.chunks} 块 · ${emb}`;
+  }catch(e){ $("#stat").textContent = "统计不可用"; }
+}
+
+function esc(s){ return (s||"").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot'}[c])); }
+
+function md(text){
+  let s = esc(text);
+  s = s.replace(/```([\s\S]*?)```/g, (_,c)=>`<pre>${c.replace(/^\n/,"")}</pre>`);
+  s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+  s = s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+  s = s.replace(/\[(\d+)\]/g, '<span class="cite">[$1]</span>');
+  const lines = s.split("\n"); let html = [], list = null;
+  for (const ln of lines){
+    const m = ln.match(/^(?:-|\*)\s+(.*)/);
+    if (m){ if(!list){ list="ul"; html.push("<ul>"); } html.push(`<li>${m[1]}</li>`); continue; }
+    if (list){ html.push(`</${list}>`); list=null; }
+    if (ln.trim()) html.push(`<p>${ln}</p>`);
+  }
+  if (list) html.push(`</${list}>`);
+  return html.join("");
+}
+
+function sources(list){
+  if (!list || !list.length) return "";
+  const rows = list.map((r,i) => `
+    <div class="src">
+      <div class="head">
+        <div class="idx">${i+1}</div>
+        <div class="path">${esc(r.path)}:${r.start_line}-${r.end_line}</div>
+        <div class="tags">
+          <span class="tag">${esc(r.source)}</span>
+          ${r.heading ? `<span class="tag">${esc(r.heading)}</span>` : ""}
+        </div>
+      </div>
+      <div class="frag" id="f${i}">${esc(r.text)}</div>
+      <div class="more" data-i="${i}">展开全文</div>
+    </div>`).join("");
+  return `<div class="card"><h2>出处（${list.length}）</h2>${rows}</div>`;
+}
+
+document.addEventListener("click", e => {
+  const more = e.target.closest(".more");
+  if (!more) return;
+  const f = $(`#f${more.dataset.i}`);
+  f.classList.toggle("open");
+  more.textContent = f.classList.contains("open") ? "收起" : "展开全文";
+});
+
+async function run(){
+  const query = $("#q").value.trim();
+  if (!query) return;
+  const btn = $("#go"); btn.disabled = true; btn.textContent = "检索中…";
+  $("#out").innerHTML = '<div class="empty">正在翻你的记忆…</div>';
+  try{
+    const endpoint = mode === "ask" ? "api/ask" : "api/search";
+    const body = mode === "ask"
+      ? {query, top_k: 6}
+      : {query, top_k: 10};
+    const r = await callApi(endpoint, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || d.error || "请求失败");
+    if (mode === "ask"){
+      const note = d.mode === "retrieval" ? '<p class="warn">（生成模型未启用，以下是原文检索结果）</p>' : "";
+      $("#out").innerHTML =
+        `<div class="card"><h2>回答</h2><div class="answer">${md(d.answer)}${note}</div></div>`
+        + sources(d.citations);
+    }else{
+      const list = d.results || [];
+      $("#out").innerHTML = list.length
+        ? sources(list)
+        : '<div class="empty">没有匹配内容。试试更具体的关键词。</div>';
+    }
+  }catch(err){
+    $("#out").innerHTML = `<div class="empty">出错了：${esc(err.message)}</div>`;
+  }finally{
+    btn.disabled = false; btn.textContent = "提问";
+  }
+}
+
+stats();
+</script>
+</body>
+</html>

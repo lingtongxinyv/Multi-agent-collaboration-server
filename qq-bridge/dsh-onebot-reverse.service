@@ -1,0 +1,15 @@
+[Unit]
+Description=DSH OneBot v11 Reverse WS Server (:3002)
+After=network.target
+
+[Service]
+Type=simple
+User=agent
+Group=agent
+WorkingDirectory=/home/agent/dsh-suite/qq-bridge
+ExecStart=/home/agent/dsh-suite/qq-bridge/run-reverse.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

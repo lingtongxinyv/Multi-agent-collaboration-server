@@ -1,0 +1,23 @@
+[Unit]
+Description=DSH Suite - MAVLink WSS 中继（127.0.0.1:8766 → 127.0.0.1:5760）
+Documentation=file:///home/agent/dsh-suite/docs/mavlink.md
+After=network.target dsh-sitl.service
+Wants=dsh-sitl.service
+
+[Service]
+Type=simple
+User=agent
+Group=agent
+WorkingDirectory=/home/agent/dsh-suite/ops/mavlink
+Environment=MAVLINK_RELAY_LOG_LEVEL=INFO
+ExecStart=/usr/bin/python3 -u /home/agent/dsh-suite/ops/mavlink/relay.py
+Restart=always
+RestartSec=2
+# 只监听 127.0.0.1；不新开公网端口，公网面只有 nginx 的 443/80
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=no
+
+[Install]
+WantedBy=multi-user.target

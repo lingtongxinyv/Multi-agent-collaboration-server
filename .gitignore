@@ -1,0 +1,43 @@
+# ── 依赖与构建产物 ───────────────────────────────────────────
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+*.tsbuildinfo
+panel/frontend/dist/
+workers/dist-connector/
+
+# ── 运行态与凭据：绝不入库 ───────────────────────────────────
+# 整个 data/ 含 panel.db、panel.secret、mcp_token、设备产物
+data/
+*.log
+.env
+.env.*
+!.env.example
+
+# 凭据文件
+panel.secret
+mcp_token
+*.token
+*.secret
+
+# 各分身的配置（含 agent token）
+workers/*.config.json
+workers/config.json
+
+# QQ 桥：NapCat 登录态、QQ 数据库
+qq-bridge/napcat/
+qq-bridge/qq.bak-*/
+
+# 知识库运行配置（含 server.token）
+kb/kb_config.json
+kb/kb.env
+
+# 证书与私钥（公网证书也别提交，用 certbot 就地管理）
+ssl/
+*.pem
+*.key
+
+# 本地备份
+*.bak-*
+*.orig

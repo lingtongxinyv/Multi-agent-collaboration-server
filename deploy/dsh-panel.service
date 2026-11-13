@@ -1,0 +1,17 @@
+[Unit]
+Description=DSH Suite - 统一面板后端 (:8010)
+After=network.target
+
+[Service]
+Type=simple
+# 可选：把 .env 里的变量注入（文件不存在也不报错）
+EnvironmentFile=-/home/agent/dsh-suite/.env
+User=agent
+Group=agent
+WorkingDirectory=/home/agent/dsh-suite/panel/backend
+ExecStart=/home/agent/.local/bin/uv run --project /home/agent/dsh-suite uvicorn app.main:app --host 127.0.0.1 --port 8010 --log-level warning
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
